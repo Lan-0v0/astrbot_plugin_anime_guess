@@ -1,0 +1,56 @@
+{
+  "enable_natural_language": {
+    "description": "启用自然语言",
+    "type": "bool",
+    "default": true,
+    "obvious_hint": true,
+    "hint": "开启后可以直接对 bot 说“来局动漫猜谜，猜作品”开局，无需 /ag 指令。依赖 AstrBot 的函数工具（function calling），需要所用聊天模型支持工具调用。关闭后仅保留 /ag 指令。"
+  },
+  "data_source": {
+    "description": "动漫数据来源库",
+    "type": "string",
+    "default": "Bangumi",
+    "options": [
+      "AniList",
+      "萌娘百科",
+      "Bangumi"
+    ],
+    "obvious_hint": true,
+    "hint": "Bangumi：作品与角色都有简体中文名，中文覆盖最好，推荐。AniList：国际库、数据规整，但中文译名只有约一半条目有，缺失时谜底会显示日文原名或罗马音。萌娘百科：实时抓取网站内容，中文原生、萌属性标签丰富，但响应较慢，取角色需要多次请求。"
+  },
+  "bangumi_token": {
+    "description": "APIkey",
+    "type": "string",
+    "default": "",
+    "condition": {
+      "data_source": "Bangumi"
+    },
+    "obvious_hint": true,
+    "hint": "Bangumi Access Token，可留空。留空即匿名读取，功能完整但频率限制更严。填写后可提高频率限制。申请地址：https://next.bgm.tv/demo/access-token"
+  },
+  "anilist_token": {
+    "description": "APIkey",
+    "type": "string",
+    "default": "",
+    "condition": {
+      "data_source": "AniList"
+    },
+    "obvious_hint": true,
+    "hint": "AniList Access Token，可留空。AniList 的公开查询无需鉴权，此处填写不会带来额外数据，仅在你需要更高配额时使用。"
+  },
+  "answer_only_when_mentioned": {
+    "description": "仅在被@时回答提问",
+    "type": "bool",
+    "default": false,
+    "obvious_hint": true,
+    "hint": "默认关闭：对局中群内任何带疑问标记的消息都会由裁判回答。活跃群里可开启此项以减少 LLM 调用，开启后只有 @bot 的提问才会被回答。两个例外不受影响：「猜 xxx」抢答始终无需 @（抢答讲究快），私聊也始终无需 @（私聊没有 @ 的概念）。"
+  },
+  "judge_provider": {
+    "description": "LLM裁判",
+    "type": "string",
+    "default": "",
+    "_special": "select_provider",
+    "obvious_hint": true,
+    "hint": "负责回答玩家提问（是/否/不清楚）以及判断“猜 xxx”是否命中谜底。留空则跟随当前聊天模型。建议选一个响应快的模型，因为对局中每次提问都会调用一次。"
+  }
+}

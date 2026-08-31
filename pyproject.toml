@@ -1,0 +1,35 @@
+# 插件本身由 AstrBot 直接加载，不需要打包安装。
+# 这个文件只用来固定 ruff 与 pytest 的配置，让本地和 CI 跑出一致结果。
+
+[tool.ruff]
+line-length = 100
+target-version = "py310"
+extend-exclude = [".pytest_cache", ".ruff_cache"]
+
+[tool.ruff.lint]
+select = [
+    "E",    # pycodestyle
+    "F",    # pyflakes
+    "W",    # warnings
+    "I",    # isort
+    "UP",   # pyupgrade
+    "B",    # bugbear
+    "SIM",  # simplify
+    "BLE",  # 宽泛 except：代码里几处是有意为之，靠 noqa 就地说明理由
+    "RUF",  # ruff 专属
+]
+ignore = [
+    "E501",    # 行宽交给 formatter，中文注释按字符数算容易误伤
+    "RUF001",  # 中文文案里本来就有全角标点
+    "RUF002",
+    "RUF003",
+]
+
+[tool.ruff.lint.per-file-ignores]
+# 测试里为了构造边界数据会写死一些魔法值和长字符串
+"tests/*" = ["B011", "SIM117"]
+
+[tool.pytest.ini_options]
+testpaths = ["tests"]
+pythonpath = ["."]
+addopts = "-q"
