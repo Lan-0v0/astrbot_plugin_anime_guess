@@ -133,10 +133,30 @@ def test_is_command_like(text, expected):
         "多少集",
         "会不会是京阿尼做的",
         "是什么题材",
+        # 选择问句：没有「吗」，靠「还是」识别
+        "是2020年之前的番还是之后的番",
+        "男主还是女主",
+        "是漫画改编或者原创动画",
+        # 问号在句中而不是句尾。玩家常自带答题说明，问号后面还有话。
+        "是2020年之前的番还是之后的番？是之前的回答是，不是之前的回答否",
+        "她是主角？我猜是",
     ],
 )
 def test_looks_like_question_accepts_questions(text):
     assert looks_like_question(text) is True
+
+
+def test_looks_like_question_accepts_mid_string_question_mark():
+    """线上实测的漏判：问号在句中，只看句尾会漏，导致消息落到 LLM 主链路。
+
+    漏判的后果不是「不回答」，而是消息被 LLM 的函数工具当成开局请求，
+    回一句「本群已经有一局在进行了」——对一句提问来说是答非所问。
+    """
+    reported = "是2020年之前的番还是之后的番？是之前的回答是，不是之前的回答否"
+    assert looks_like_question(reported) is True
+    # 两个判据各自都能独立命中，去掉任意一个仍然识别得出
+    assert looks_like_question(reported.replace("？", "")) is True
+    assert looks_like_question("这番在2020之前？") is True
 
 
 @pytest.mark.parametrize(
@@ -159,6 +179,13 @@ def test_looks_like_question_accepts_questions(text):
         "这是一段很长的闲聊" * 30,  # 太长
         "我觉得这部作品很好看",  # 陈述句，无疑问标记
         "开始了开始了",
+        # 自然语言控制指令：必须仍算「非提问」，否则会被裁判接走、
+        # 走不到 start_anime_guess / stop_anime_guess 函数工具。
+        "结束游戏",
+        "再来一局",
+        "来局动漫猜谜，猜作品",
+        "不玩了",
+        "开一局猜角色",
     ],
 )
 def test_looks_like_question_rejects_chatter(text):

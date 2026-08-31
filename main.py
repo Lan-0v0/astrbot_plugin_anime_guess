@@ -55,7 +55,7 @@ except ImportError:  # pragma: no cover - AstrBot 有时把插件目录直接加
     "astrbot_plugin_anime_guess",
     "Lan-0v0",
     "猜动漫作品／角色的多人问答游戏，支持 AniList、萌娘百科、Bangumi 三个数据源与 LLM 裁判。",
-    "v0.0.1",
+    "v0.0.2",
     "https://github.com/Lan-0v0/astrbot_plugin_anime_guess",
 )
 class AnimeGuessPlugin(Star):
@@ -289,6 +289,23 @@ class AnimeGuessPlugin(Star):
     # ------------------------------------------------------------------ #
     # 函数工具：自然语言开局
     # ------------------------------------------------------------------ #
+    async def _answer_as_judge(self, event: AstrMessageEvent, session) -> str:
+        """把玩家这句话当成对谜底的提问，交给裁判回答。
+
+        兜底用：正常情况下 on_message 会先把提问接走，走不到这里。只有当
+        提问识别漏判、消息又落到 LLM 主链路并被误判成「开局」时才会用上。
+        """
+        question = str(event.message_str or "").strip()
+        try:
+            return await self._judge().answer_question(
+                event.unified_msg_origin, session.puzzle, question
+            )
+        except Exception as error:  # noqa: BLE001 - provider 异常类型不一。
+            logger.warning(
+                "兜底回答提问失败。错误类型：%s，错误：%s", type(error).__name__, error
+            )
+            return "裁判走神了，稍后再问一次吧。"
+
     @filter.llm_tool(name="start_anime_guess")
     async def start_anime_guess_tool(self, event: AstrMessageEvent, mode: str = "随机"):
         """开启一局动漫猜谜游戏（Anime Guess）。当用户想玩猜动漫、猜番、猜作品或猜角色的游戏时调用。
@@ -298,6 +315,20 @@ class AnimeGuessPlugin(Star):
         """
         if not self._natural_language_enabled():
             return "自然语言开启游戏已被管理员关闭，请改用 /ag 指令。"
+
+        # 对局进行中时，模型很容易把「是2020年之前的番还是之后的」这类对谜底的
+        # 提问误判成开局请求。这时绝不能回「已经有一局在进行了」——那对一句提问
+        # 来说是答非所问。看着像提问就交给裁判，否则只回一句工具结果让模型自己说。
+        session = self.games.get(event.unified_msg_origin)
+        if session is not None:
+            text = str(event.message_str or "").strip()
+            if looks_like_question(text) and not parse_guess(text):
+                await event.send(
+                    event.plain_result(await self._answer_as_judge(event, session))
+                )
+                event.stop_event()
+                return None
+            return "本群已经有一局动漫猜谜在进行中，不要重复开局。"
 
         normalized = str(mode or "").strip()
         if any(word in normalized for word in ("作品", "番", "动画", "work")):

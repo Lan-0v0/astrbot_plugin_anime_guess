@@ -2,7 +2,7 @@ name: astrbot_plugin_anime_guess
 display_name: Anime Guess 动漫猜谜
 desc: 猜动漫作品／角色的多人问答游戏。开局后 bot 抽一个谜底，玩家自由提问，LLM 裁判只答「是/否/不清楚」，群内任何人都能用「猜 xxx」抢答，猜对者进排行榜。
 short_desc: 群聊多人动漫猜谜游戏，支持 AniList、萌娘百科、Bangumi 三个数据源。
-version: v0.0.1
+version: v0.0.2
 author: Lan-0v0
 repo: https://github.com/Lan-0v0/astrbot_plugin_anime_guess
 astrbot_version: ">=4.11.0,<5"

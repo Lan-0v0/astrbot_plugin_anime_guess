@@ -1,7 +1,7 @@
 # Anime Guess 动漫猜谜
 
 [![AstrBot](https://img.shields.io/badge/AstrBot-%3E%3D4.11.0-blue)](https://github.com/AstrBotDevs/AstrBot)
-[![Version](https://img.shields.io/badge/version-v0.0.1-green)](https://github.com/Lan-0v0/astrbot_plugin_anime_guess/releases)
+[![Version](https://img.shields.io/badge/version-v0.0.2-green)](https://github.com/Lan-0v0/astrbot_plugin_anime_guess/releases)
 [![License](https://img.shields.io/badge/license-MIT-lightgrey)](LICENSE)
 
 群聊里的多人动漫猜谜游戏。bot 抽一个动漫作品或角色当谜底，玩家自由提问，
@@ -103,7 +103,7 @@ py -m pytest tests -q
 py -m ruff check .
 ```
 
-179 个单元测试覆盖谜底解析、三个数据源的响应解析、裁判答案收敛、排行榜持久化与
+190 个单元测试覆盖谜底解析、三个数据源的响应解析、裁判答案收敛、排行榜持久化与
 消息解析；数据源的实网抽取与逐功能验收另有脚本，不在仓库内。
 
 ## License

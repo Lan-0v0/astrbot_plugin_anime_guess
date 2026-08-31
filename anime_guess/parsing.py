@@ -28,6 +28,8 @@ IGNORED_PHRASES = frozenset(
 QUESTION_MARKERS = (
     "吗", "么", "是不是", "有没有", "是否", "属于", "算不算", "对吗", "对不对",
     "难道", "该不会", "会不会", "能不能", "多少", "几", "谁", "哪", "什么",
+    # 选择问句：「是2020年之前的番还是之后的」这种没有「吗」也是提问。
+    "还是", "或者", "是不", "有无",
 )
 
 #: 消息以这些字符开头时视为其他插件的指令，不参与对局。
@@ -87,7 +89,9 @@ def looks_like_question(text: str) -> bool:
         return False
     if stripped.casefold() in IGNORED_PHRASES:
         return False
-    if stripped.endswith(("?", "？")):
+    # 问号出现在任何位置都算：玩家常写「……之前的番？是之前的回答是」，
+    # 问号在中间，只看结尾会漏判，进而让消息落到 LLM 主链路上去。
+    if "?" in stripped or "？" in stripped:
         return True
     return any(marker in stripped for marker in QUESTION_MARKERS)
 
