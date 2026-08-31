@@ -9,6 +9,7 @@ from anime_guess.parsing import (
     looks_like_question,
     mentions_bot,
     parse_action,
+    parse_ask,
     parse_guess,
 )
 
@@ -93,6 +94,50 @@ def test_parse_guess_accepts_variants(text, expected):
 )
 def test_parse_guess_rejects_non_guesses(text):
     assert parse_guess(text) == ""
+
+
+# --------------------------------------------------------------------------- #
+# 显式提问格式
+# --------------------------------------------------------------------------- #
+@pytest.mark.parametrize(
+    ("text", "expected"),
+    [
+        ("问 这个角色会使用魔法吗？", "这个角色会使用魔法吗？"),
+        ("问　这个角色是女性吗", "这个角色是女性吗"),  # 全角空格
+        ("问：是2020年之后的番吗", "是2020年之后的番吗"),
+        ("问:有第二季吗", "有第二季吗"),
+        ("问  会魔法  ", "会魔法"),
+        # 显式指令不要求带疑问标记，玩家写「问 男主」也照样受理。
+        ("问 男主", "男主"),
+        ("  问 是京都动画做的吗  ", "是京都动画做的吗"),
+        ("问 Re:从零开始的异世界生活里出现过吗", "Re:从零开始的异世界生活里出现过吗"),
+    ],
+)
+def test_parse_ask_accepts_variants(text, expected):
+    assert parse_ask(text) == expected
+
+
+@pytest.mark.parametrize(
+    "text",
+    [
+        "问题是什么",  # 没有分隔符，普通消息不能被吞掉
+        "问号",
+        "请问 这个角色会魔法吗",  # 不在开头
+        "问",
+        "问 ",
+        "问　",
+        "这个角色会使用魔法吗",  # 隐式提问走 looks_like_question，不是这里
+        "",
+    ],
+)
+def test_parse_ask_rejects_non_asks(text):
+    assert parse_ask(text) == ""
+
+
+def test_parse_ask_and_parse_guess_do_not_overlap():
+    """「问 xxx」不该被当成抢答，「猜 xxx」也不该被当成提问。"""
+    assert parse_guess("问 这个角色会魔法吗") == ""
+    assert parse_ask("猜 蕾姆") == ""
 
 
 # --------------------------------------------------------------------------- #

@@ -1,7 +1,7 @@
 # Anime Guess 动漫猜谜
 
 [![AstrBot](https://img.shields.io/badge/AstrBot-%3E%3D4.11.0-blue)](https://github.com/AstrBotDevs/AstrBot)
-[![Version](https://img.shields.io/badge/version-v0.0.2-green)](https://github.com/Lan-0v0/astrbot_plugin_anime_guess/releases)
+[![Version](https://img.shields.io/badge/version-v0.0.3-green)](https://github.com/Lan-0v0/astrbot_plugin_anime_guess/releases)
 [![License](https://img.shields.io/badge/license-MIT-lightgrey)](LICENSE)
 
 群聊里的多人动漫猜谜游戏。bot 抽一个动漫作品或角色当谜底，玩家自由提问，
@@ -16,7 +16,7 @@ LLM 裁判只回答「是／否／不清楚」，群里任何人都能用「猜 
  bot ：游戏开始，请开始提问，我会回答“是/否/不清楚”直至谜底揭晓
 玩家A：是女生吗
  bot ：是
-玩家B：会魔法吗
+玩家B：问 这个角色会使用魔法吗？
  bot ：是
 玩家C：猜 惠惠
  bot ：🎉 恭喜 玩家C 猜对了！
@@ -32,6 +32,7 @@ LLM 裁判只回答「是／否／不清楚」，群里任何人都能用「猜 
 | `/ag 作品` | 以作品名为谜底开启游戏 |
 | `/ag 角色` | 以角色名为谜底开启游戏 |
 | `/ag 随机` | 以作品／角色名为谜底开启游戏 |
+| `问 <你的提问>` | 询问问题，bot 回答 是／否／不清楚，比如 `问 这个角色会使用魔法吗？` |
 | `猜 <作品/角色名>` | 对谜底进行猜测，比如 `猜 蕾姆` |
 | `/ag 结束` | 结束游戏并揭晓谜底 |
 | `/ag 排行榜` | 查看 AGのKing～ |
@@ -64,7 +65,8 @@ git clone https://github.com/Lan-0v0/astrbot_plugin_anime_guess.git
 | 仅在被@时回答提问 | 活跃群里可开启以减少 LLM 调用，默认关闭 |
 | LLM裁判 | 选一个已配置的模型提供商，留空则跟随当前聊天模型 |
 
-「仅在被@时回答提问」有两个例外不受影响：`猜 xxx` 抢答始终无需 @（抢答讲究快），
+「仅在被@时回答提问」只管「不带指令的疑问句」这一种情况，三个例外不受影响：
+`问 xxx` 是显式提问指令，始终无需 @；`猜 xxx` 抢答始终无需 @（抢答讲究快）；
 私聊也始终无需 @（私聊没有 @ 的概念）。
 
 ## 数据来源库怎么选
@@ -103,7 +105,7 @@ py -m pytest tests -q
 py -m ruff check .
 ```
 
-190 个单元测试覆盖谜底解析、三个数据源的响应解析、裁判答案收敛、排行榜持久化与
+207 个单元测试覆盖谜底解析、三个数据源的响应解析、裁判答案收敛、排行榜持久化与
 消息解析；数据源的实网抽取与逐功能验收另有脚本，不在仓库内。
 
 ## License

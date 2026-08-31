@@ -28,6 +28,7 @@ try:
         looks_like_question,
         mentions_bot,
         parse_action,
+        parse_ask,
         parse_guess,
     )
     from .anime_guess.sources import DEFAULT_SOURCE, SourceError, build_source
@@ -46,6 +47,7 @@ except ImportError:  # pragma: no cover - AstrBot 有时把插件目录直接加
         looks_like_question,
         mentions_bot,
         parse_action,
+        parse_ask,
         parse_guess,
     )
     from anime_guess.sources import DEFAULT_SOURCE, SourceError, build_source
@@ -55,7 +57,7 @@ except ImportError:  # pragma: no cover - AstrBot 有时把插件目录直接加
     "astrbot_plugin_anime_guess",
     "Lan-0v0",
     "猜动漫作品／角色的多人问答游戏，支持 AniList、萌娘百科、Bangumi 三个数据源与 LLM 裁判。",
-    "v0.0.2",
+    "v0.0.3",
     "https://github.com/Lan-0v0/astrbot_plugin_anime_guess",
 )
 class AnimeGuessPlugin(Star):
@@ -228,6 +230,14 @@ class AnimeGuessPlugin(Star):
                 yield result
             return
 
+        # 「问 xxx」是显式提问指令，和「猜 xxx」一样不需要 @：玩家写了「问」
+        # 就是在问谜底，既不用再过疑问标记的启发式，也不受「仅在被@时回答」限制。
+        asked = parse_ask(text)
+        if asked:
+            async for result in self._handle_question(event, session, asked, explicit=True):
+                yield result
+            return
+
         if not looks_like_question(text) or not self._question_allowed(event):
             return
 
@@ -272,8 +282,15 @@ class AnimeGuessPlugin(Star):
             f"你已累计猜对 {wins} 次"
         )
 
-    async def _handle_question(self, event: AstrMessageEvent, session, question: str):
-        """由 LLM 裁判回答一次提问。"""
+    async def _handle_question(
+        self, event: AstrMessageEvent, session, question: str, explicit: bool = False
+    ):
+        """由 LLM 裁判回答一次提问。
+
+        ``explicit`` 表示玩家用「问 xxx」明确发起了提问。这时裁判出错要说一声，
+        不然玩家会以为指令没生效；而靠疑问标记猜出来的提问失败就沉默，避免把
+        群里的普通聊天变成一串报错。
+        """
         session.question_count += 1
         try:
             answer = await self._judge().answer_question(
@@ -283,6 +300,8 @@ class AnimeGuessPlugin(Star):
             logger.warning(
                 "回答提问失败。错误类型：%s，错误：%s", type(error).__name__, error
             )
+            if explicit:
+                yield event.plain_result("裁判走神了，稍后再问一次吧。")
             return
         yield event.plain_result(answer)
 
@@ -295,7 +314,9 @@ class AnimeGuessPlugin(Star):
         兜底用：正常情况下 on_message 会先把提问接走，走不到这里。只有当
         提问识别漏判、消息又落到 LLM 主链路并被误判成「开局」时才会用上。
         """
-        question = str(event.message_str or "").strip()
+        text = str(event.message_str or "").strip()
+        # 万一带着「问 」前缀走到这里，只把问题本身交给裁判。
+        question = parse_ask(text) or text
         try:
             return await self._judge().answer_question(
                 event.unified_msg_origin, session.puzzle, question
@@ -322,7 +343,7 @@ class AnimeGuessPlugin(Star):
         session = self.games.get(event.unified_msg_origin)
         if session is not None:
             text = str(event.message_str or "").strip()
-            if looks_like_question(text) and not parse_guess(text):
+            if (parse_ask(text) or looks_like_question(text)) and not parse_guess(text):
                 await event.send(
                     event.plain_result(await self._answer_as_judge(event, session))
                 )

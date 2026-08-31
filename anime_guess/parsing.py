@@ -10,6 +10,12 @@ import re
 #: 「猜 xxx」的抢答格式。空格、全角空格、冒号都认。
 GUESS_PATTERN = re.compile(r"^猜[\s　:：]+(?P<answer>.+)$")
 
+#: 「问 xxx」的显式提问格式，分隔符与「猜」一致。
+#:
+#: 要求必须有分隔符，这样「问题是什么」「问号」这类以「问」开头的普通消息
+#: 不会被当成提问指令。
+ASK_PATTERN = re.compile(r"^问[\s　:：]+(?P<question>.+)$")
+
 #: 提问至少要有这么多字，避免把「嗯」当提问喂给 LLM。
 MIN_QUESTION_LENGTH = 2
 
@@ -71,6 +77,18 @@ def parse_guess(text: str) -> str:
     if match is None:
         return ""
     return match.group("answer").strip()
+
+
+def parse_ask(text: str) -> str:
+    """从消息里取出「问 xxx」的提问内容。不是该格式时返回空串。
+
+    显式指令，所以不需要再过 ``looks_like_question``：玩家写了「问」就是要问，
+    哪怕内容不带疑问标记（比如「问 男主」）也照样受理。
+    """
+    match = ASK_PATTERN.match(str(text or "").strip())
+    if match is None:
+        return ""
+    return match.group("question").strip()
 
 
 def is_command_like(text: str) -> bool:

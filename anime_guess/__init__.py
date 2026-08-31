@@ -14,6 +14,7 @@ from .parsing import (
     looks_like_question,
     mentions_bot,
     parse_action,
+    parse_ask,
     parse_guess,
 )
 
@@ -39,5 +40,6 @@ __all__ = [
     "normalize_name",
     "parse_action",
     "parse_answer",
+    "parse_ask",
     "parse_guess",
 ]
